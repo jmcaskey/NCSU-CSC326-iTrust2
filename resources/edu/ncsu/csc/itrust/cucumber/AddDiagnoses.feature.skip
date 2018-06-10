@@ -1,0 +1,39 @@
+#Author jmcaskey
+Feature: Add diagnoses to list for use in office visits
+	As an iTrust Admin
+	I want to add a diagnosis to list of diagnoses available
+	so that a record exists of diagnoses added for usage
+	
+Scenario Outline: Add diagnosis to list with code
+Given The desired diagnosis does not exist
+When I log in to iTrust2 as an Admin
+When I navigate to the Add Diagnosis page
+When I fill in information on the diagnoses with diagnoses: <diagnoses>, and  ICD-10 id: <id>
+Then The diagnosis is add successfully
+And The diagnoses values are correct
+
+Examples:
+	| diagnoses     | id    |
+	| Flu           | j09.1 |
+	| Careless Weed | E00.1 |
+
+
+Scenario Outline: Add invalid diagnosis to list with code
+Given The desired diagnosis does not exist
+When I log in to iTrust2 as an Admin
+When I navigate to the Add Diagnosis page
+When I fill in information on the diagnoses with diagnoses: <diagnoses>, and  ICD-10 id: <id>
+Then The diagnosis is add unsuccessfully
+And The diagnoses values are not added
+
+Examples:
+	| diagnoses     | id    |
+	| Flu           | 019.1 |
+	| Careless Weed | 00E.1 |
+	| Flu           | 0E0.1 |
+	| Careless Weed | 0EE.1 |
+	| Careless Weed | E0E.1 |
+	| Flu           | EE9.1 |
+	| Careless Weed | EEE.1 |
+	| Flu           | E19   |
+	| Careless Weed | E19.E |

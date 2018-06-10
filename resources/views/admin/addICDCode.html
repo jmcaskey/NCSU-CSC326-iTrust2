@@ -1,0 +1,36 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Add ICD Code</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+
+
+	<div th:fragment="content">
+		<h1>Add ICD Code</h1>
+		<form action="#" th:action="@{/admin/addICDCode}"
+			th:object="${ICDCodeForm}" method="post">
+			<table>
+
+				<tr>
+					<td>Code:</td>
+					<td><input type="text" th:field="*{code}" /></td>
+					<td th:if="${#fields.hasErrors('code')}" th:errors="*{code}">Code
+						invalid or already in use</td>
+				</tr>
+
+				<tr>
+					<td>Name:</td>
+					<td><input type="text" th:field="*{name}" /></td>
+					<td th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name
+						is invalid</td>
+				</tr>
+
+				<tr>
+					<td><button type="submit" class="btn">Add ICD Code</button></td>
+				</tr>
+
+			</table>
+		</form>
+	</div>
+</body>
+</html>

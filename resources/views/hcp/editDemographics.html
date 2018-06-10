@@ -1,0 +1,222 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout-new :: head(title=~{::title},links=~{})">
+  <title>Edit Patient Demographics</title>
+</head>
+
+<body th:include="layout-new :: body" th:with="content=~{::content}">
+
+
+  <div th:fragment="content">
+    <script>
+      'use strict';
+      var app = angular.module('myApp', []);
+      app.controller('editDemographicsCtrl', function ($scope, $http) {
+        var self = this;
+
+        window.s = self;
+
+        var urlParts = window.location.href.split("/");
+        var patientName = urlParts[urlParts.length - 1];
+
+        $http.get("/iTrust2/api/v1/demographics/" + patientName).then(
+          function (response) {
+            self.data = response.data;
+            self.data.bloodType = self.data.bloodType == undefined ? "" : self.data.bloodType.replace("Pos", "+").replace("Neg", "-");
+            self.data.dateOfBirth = ("00" + (self.data.dateOfBirth.month + 1)).slice(-2) + "/" + ("00" + self.data.dateOfBirth.dayOfMonth).slice(-2) + "/" + ("0000" + self.data.dateOfBirth.year).slice(-4);
+            var ethnicityConversion = {
+              "AfricanAmerican": "African American",
+              "NativeAmerican": "Native American",
+              "NotSpecified": "Not Specified",
+            }
+            if (ethnicityConversion[self.data.ethnicity]) {
+              self.data.ethnicity = ethnicityConversion[self.data.ethnicity];
+            }
+            if (self.data.gender == "NotSpecified") {
+              self.data.gender = "Not Specified";
+            }
+          });
+
+        self.submit = function () {
+          var infoToSend = {};
+          infoToSend.self = self.data.self.username;
+          infoToSend.mother = self.data.mother == undefined ? "" : self.data.mother.username;
+          infoToSend.father = self.data.father == undefined ? "" : self.data.father.username;
+          var fields = ["firstName", "lastName", "preferredName", "email", "address1", "address2", "city", "state", "zip", "phone", "dateOfBirth", "bloodType", "ethnicity", "gender"];
+          for (var i = 0; i < fields.length; i++) {
+            infoToSend[fields[i]] = (self.data[fields[i]] == undefined || self.data[fields[i]].length == 0 ? null : self.data[fields[i]]);
+          }
+
+          console.log(infoToSend);
+
+          var httpRequest = {
+            method: 'POST',
+            url: '/iTrust2/api/v1/hcp/editDemographics',
+            data: infoToSend,
+          };
+
+          $http(httpRequest).then(
+            function (response) {
+              $scope.message = "Demographics edited successfully.";
+              $scope.errorMsg = "";
+            }, function (rejection) {
+              var errorMsg = "";
+              if (window.URLSearchParams != undefined) {
+                var params = new URLSearchParams(rejection.message.split("?")[1]);
+                if (params.get != undefined)
+                  errorMsg = params.get("p0");
+              }
+              $scope.message = "";
+              $scope.errorMsg = "Error editing demographics. " + errorMsg;
+            });
+        }
+      });
+    </script>
+    <h1>Edit Patient Demographics</h1>
+    <form action="#" th:action="@{/hcp/editDemographics}" th:object="${PatientForm}" method="post">
+      <input type="hidden" th:field="*{self}" />
+
+      <table ng-app="myApp" ng-controller="editDemographicsCtrl as ctrl">
+        <tr>
+          <td>First Name</td>
+          <td>
+            <input type="text" id="firstName" name="firstName" ng-model="ctrl.data.firstName" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Last Name</td>
+          <td>
+            <input type="text" id="lastName" name="lastName" ng-model="ctrl.data.lastName" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Preferred Name</td>
+          <td>
+            <input type="text" id="preferredName" name="preferredName" ng-model="ctrl.data.preferredName" />
+          </td>
+        </tr>
+
+
+        <tr>
+          <td>Mother (username)</td>
+          <td>
+            <input type="text" id="mother" name="mother" ng-model="ctrl.data.mother.username" />
+          </td>
+          <td th:if="${#fields.hasErrors('mother')}" th:errors="*{mother}">Mother's username was invalid</td>
+        </tr>
+
+        <tr>
+          <td>Father (username)</td>
+          <td>
+            <input type="text" id="father" name="father" ng-model="ctrl.data.father.username" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Email</td>
+          <td>
+            <input type="text" id="email" name="email" ng-model="ctrl.data.email" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Address Line 1</td>
+          <td>
+            <input type="text" id="address1" name="address1" ng-model="ctrl.data.address1" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Address Line 2</td>
+          <td>
+            <input type="text" id="address2" name="address2" ng-model="ctrl.data.address2" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>City</td>
+          <td>
+            <input type="text" id="city" name="city" ng-model="ctrl.data.city" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>State</td>
+          <td>
+            <select id="state" name="state" ng-model="ctrl.data.state">
+              <option th:each="state : ${T(edu.ncsu.csc.itrust2.models.enums.State).values()}" th:value="${state}" th:text="${state}"></option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Zip</td>
+          <td>
+            <input type="text" id="zip" name="zip" ng-model="ctrl.data.zip" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Phone</td>
+          <td>
+            <input type="text" id="phone" name="phone" ng-model="ctrl.data.phone" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Date of Birth</td>
+          <td>
+            <input type="text" id="dateOfBirth" name="dateOfBirth" ng-model="ctrl.data.dateOfBirth" />
+          </td>
+        </tr>
+
+        <tr>
+          <td>Blood Type</td>
+          <td>
+            <select id="bloodType" name="bloodType" ng-model="ctrl.data.bloodType">
+              <option th:each="type : ${T(edu.ncsu.csc.itrust2.models.enums.BloodType).values()}" th:value="${type}" th:text="${type}"></option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Ethnicity</td>
+          <td>
+            <select id="ethnicity" name="ethnicity" ng-model="ctrl.data.ethnicity">
+              <option th:each="ethnicity : ${T(edu.ncsu.csc.itrust2.models.enums.Ethnicity).values()}" th:value="${ethnicity}" th:text="${ethnicity}"></option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>Gender</td>
+          <td>
+            <select id="gender" name="gender" ng-model="ctrl.data.gender">
+              <option th:each="gender : ${T(edu.ncsu.csc.itrust2.models.enums.Gender).values()}" th:value="${gender}" th:text="${gender}"></option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <button type="button" class="btn" ng-click="ctrl.submit()">Submit</button>
+            <div name="messages" style="width:200px">
+              <div class="text-success" name="success" ng-show="message.length > 0">{{message}}</div>
+              <div class="text-danger" name="errorMsg" ng-show="errorMsg.length > 0">{{errorMsg}}</div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a href="/iTrust2/hcp/documentOfficeVisit.html">Go Back to Office Visit</a>
+          </td>
+        </tr>
+
+      </table>
+    </form>
+  </div>
+</body>
+
+</html>

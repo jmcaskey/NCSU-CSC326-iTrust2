@@ -1,0 +1,49 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout-new :: head(title=~{::title},links=~{})">
+  <title>Document Office Visit</title>
+</head>
+
+<body th:include="layout-new :: body" th:with="content=~{::content}">
+  <div th:fragment="content">
+    <script>
+      'use strict';
+      var app = angular.module('myApp', []);
+      app.controller('viewDiagnosesCtrl', function ($scope, $http) {
+        var self = this;
+
+        window.s = self;
+
+        $http.get("/iTrust2/api/v1/prescriptions/myprescriptions").then(
+          function (response) {
+            self.prescriptions = response.data;
+            for (var i = 0; i < self.prescriptions.length; i++) {
+              var p = self.prescriptions[i];
+              p.formattedStartDate = (p.startDate.month + 1) + "/" + p.startDate.dayOfMonth + "/" + p.startDate.year;
+              p.formattedEndDate = (p.endDate.month + 1) + "/" + p.endDate.dayOfMonth + "/" + p.endDate.year;
+              if (p.visit != null) {
+                p.hasVisit = true;
+                p.formattedVisitDate = (p.visit.date.month + 1) + "/" + p.visit.date.dayOfMonth + "/" + p.visit.date.year;
+              } else {
+                p.hasVisit = false;
+              }
+            }
+          });
+
+      });
+
+    </script>
+
+    <div class="container" style="height:80vh;" ng-app="myApp" ng-controller="viewDiagnosesCtrl as ctrl">
+      <h2>Prescriptions</h2>
+      <ul>
+        <li ng-repeat="p in ctrl.prescriptions">{{p.ndc.name}}: {{p.formattedStartDate}}-{{p.formattedEndDate}}, {{p.dosage}}mg, {{p.numRenewals}} renewals.
+          <span ng-if="p.hasVisit">This is associated with an office visit on {{p.formattedVisitDate}}.</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+
+</html>

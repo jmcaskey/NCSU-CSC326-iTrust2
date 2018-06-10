@@ -1,0 +1,43 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout-new :: head(title=~{::title},links=~{})">
+  <title>Document Office Visit</title>
+</head>
+
+<body th:include="layout-new :: body" th:with="content=~{::content}">
+  <div th:fragment="content">
+    <script>
+      'use strict';
+      var app = angular.module('myApp', []);
+      app.controller('viewDiagnosesCtrl', function ($scope, $http) {
+        var self = this;
+
+        window.s = self;
+
+        $http.get("/iTrust2/api/v1/officevisits/myofficevisits").then(
+          function (response) {
+            self.visits = response.data;
+            for (var i = 0; i < self.visits.length; i++) {
+              var v = self.visits[i];
+              v.formattedDate = (v.date.month + 1) + "/" + v.date.dayOfMonth + "/" + v.date.year;
+              v.formattedTime = ((v.date.hourOfDay - 1) % 12 + 1) + ":" + ("00" + v.date.minute).slice(-2) + " " + (v.date.hourOfDay < 12 ? "am" : "pm");
+              if (v.icdCode == undefined)
+                self.visits.splice(i--, 1);
+            }
+          });
+
+      });
+
+    </script>
+
+    <div class="container" style="height:80vh;" ng-app="myApp" ng-controller="viewDiagnosesCtrl as ctrl">
+      <h2>Diagnoses</h2>
+      <ul>
+        <li ng-repeat="v in ctrl.visits">{{v.icdCode.name}} - {{v.formattedDate}} {{v.formattedTime}}</li>
+      </ul>
+    </div>
+
+  </div>
+</body>
+
+</html>

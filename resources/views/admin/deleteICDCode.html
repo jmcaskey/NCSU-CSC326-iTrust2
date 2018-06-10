@@ -1,0 +1,39 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Delete ICD Code</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+
+
+	<div th:fragment="content">
+		<span th:if="${icdCodes!=null and icdCodes.size() == 0}">No
+			ICD Codes found.</span>
+		<form th:method="POST" th:action="@{/admin/deleteICDCode}"
+			th:object="${deleteICDCodeForm}" method="post"
+			modelAttribute="deleteICDCodeForm">
+			<div th:each="icdCode : ${icdCodes}" class="radio">
+				<input type="radio" th:value="${icdCode.code}" name="code"
+					th:id="${icdCode.code}">
+				<div name="${icdCode.code}">
+					<br /> <strong>ICD Code</strong>
+					<div th:text="${icdCode.code}" style="display: inline-block"></div>
+					<br /> <br /> <strong>Name</strong>
+					<div th:text="${icdCode.name}" style="display: inline-block"></div>
+					<br />
+				</div>
+				</input>
+			</div>
+
+			<span th:if="${icdCodes!=null and icdCodes.size() != 0}">
+
+				<tr>
+					<td><input type="checkbox" name="confirm" class="checkbox">Confirm
+						Delete</input></td>
+				</tr> <br />
+				<button type="submit" class="btn btn-default">Submit</button>
+			</span>
+		</form>
+
+	</div>
+</body>
+</html>

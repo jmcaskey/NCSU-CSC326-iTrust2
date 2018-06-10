@@ -1,0 +1,247 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:include="layout-new :: head(title=~{::title},links=~{})">
+  <title>Document Office Visit</title>
+</head>
+
+<body th:include="layout-new :: body" th:with="content=~{::content}">
+  <div th:fragment="content">
+    <script src="/iTrust2/resources/js/visitObject.js"></script>
+    <script src="/iTrust2/resources/js/prescriptionObject.js"></script>
+    <script src="/iTrust2/resources/js/documentOfficeVisitController.js"></script>
+
+    <div class="container-fluid" ng-app="myApp" ng-controller="documentOfficeVisitCtrl as ctrl">
+      <div class="row" style="height:80vh;">
+        <div class="col-12 col-sm-4" style="overflow-y:scroll;">
+          <form>
+            <h2>Date:</h2>
+            <div class="form-group">
+              <input type="text" name="date" autocomplete="off" ng-model="ctrl.visit.date.value" ng-change="ctrl.visit.date.verify()" />
+              <div class="text-danger" ng-show="ctrl.visit.date.invalid">{{ctrl.visit.date.errorMessage}}</div>
+            </div>
+            <h2>Patients:</h2>
+            <div class="form-group">
+              <label>Search:</label>
+              <input type="text" ng-model="searchFilter.self.username" />
+            </div>
+            <div class="form-check" ng-repeat="patient in ctrl.visit.patient.patientList | filter:searchFilter">
+              <label class="form-check-label">
+                <input class="form-check-input" type="radio" name="name" ng-model="ctrl.visit.patient.value" value="{{patient.self.username}}"
+                  ng-change="ctrl.visit.patient.verify()" ng-click="ctrl.showMe()" /> {{patient.firstName}} {{patient.lastName}} ({{patient.self.username}})
+              </label>
+            </div>
+            <button class="btn btn-primary" ng-click="ctrl.submit()" name="submit">Submit Office Visit</button>
+            <br>
+            <a ng-href="/iTrust2/hcp/editDemographics/{{ctrl.visit.patient.value}}" ng-show="selected">Edit Demographics</a>
+            <div name="messages">
+              <div class="text-success" name="success" ng-show="message.length > 0">{{message}}</div>
+              <div class="text-danger" name="errorMsg" ng-show="errorMsg.length > 0">{{errorMsg}}</div>
+            </div>
+          </form>
+        </div>
+        <div class="col-12 col-sm-8" style="height:80vh;overflow-y:scroll;">
+          <!-- Visit Data -->
+          <h2>Patient: {{ctrl.visit.patient.value}}
+            <span ng-if="ctrl.visit.patient.age>=0"> {{ctrl.visit.patient.age}} years old</span>
+          </h2>
+          <section class="jumbotron">
+            <h2>Primary Office Visit Data</h2>
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" name="preScheduled" class="checkbox" ng-model="ctrl.visit.prescheduled.value"> Prescheduled?
+              </label>
+            </div>
+            <div class="form-group row">
+              <div class="col-3">
+                <label>Appointment Type:</label>
+              </div>
+              <div class="col-5 card radio-box">
+                <div class="card-block">
+                  <div class="form-check" ng-repeat="type in ctrl.visit.type.typeList">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="radio" name="type" ng-model="ctrl.visit.type.value" ng-blur="ctrl.visit.type.verify()"
+                        value="{{type}}"> {{type}}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group row">
+              <div class="col-3">
+                <label>Hospital:</label>
+              </div>
+              <div class="col-5 card radio-box">
+                <div class="card-block">
+                  <div class="form-check" ng-repeat="hospital in ctrl.visit.hospital.hospitalList">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="radio" name="hospital" ng-model="ctrl.visit.hospital.value" ng-blur="ctrl.visit.hospital.verify()"
+                        value="{{hospital.name}}"> {{hospital.name}}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Time:</label>
+              <input type="text" class="form-control" name="time" autocomplete="off" ng-model="ctrl.visit.time.value" ng-blur="ctrl.visit.time.verify()"
+              />
+              <div class="text-danger" ng-show="ctrl.visit.time.invalid">{{ctrl.visit.time.errorMessage}}</div>
+            </div>
+            <div class="form-group">
+              <label>Notes:</label>
+              <textarea name="notes" class="form-control" ng-model="ctrl.visit.notes.value" ng-blur="ctrl.visit.notes.verify()"></textarea>
+              <div class="text-danger" ng-show="ctrl.visit.notes.invalid">{{ctrl.visit.notes.errorMessage}}</div>
+            </div>
+          </section>
+          <!-- Diagnosis -->
+          <section class="jumbotron">
+            <h2>Diagnosis</h2>
+            <select class="form-control" name="icdCode" ng-model="ctrl.visit.icdCode.selected" ng-options="opt as opt.label for opt in ctrl.visit.icdCode.options"
+              ng-blur="ctrl.visit.icdCode.verify()">
+            </select>
+          </section>
+          <!-- Prescription -->
+          <section class="jumbotron">
+            <h2>Prescription</h2>
+            <select class="form-control" name="ndcCode" ng-model="ctrl.prescription.ndc.selected" ng-options="opt as opt.label for opt in ctrl.prescription.ndc.options"
+              ng-change="ctrl.prescription.ndc.verify()">
+            </select>
+            <div ng-if="!ctrl.prescription.ndc.isNone">
+              <div class="form-group">
+                <label>Start Date:</label>
+                <input type="text" class="form-control" name="prescStart" autocomplete="off" ng-model="ctrl.prescription.startDate.value"
+                  ng-blur="ctrl.prescription.startDate.verify()" />
+                <div class="text-danger" ng-show="ctrl.prescription.startDate.invalid">{{ctrl.prescription.startDate.errorMessage}}</div>
+              </div>
+              <div class="form-group">
+                <label>End Date:</label>
+                <input type="text" class="form-control" name="prescEnd" autocomplete="off" ng-model="ctrl.prescription.endDate.value" ng-blur="ctrl.prescription.endDate.verify()"
+                />
+                <div class="text-danger" ng-show="ctrl.prescription.endDate.invalid">{{ctrl.prescription.endDate.errorMessage}}</div>
+                <div class="text-danger" ng-show="ctrl.prescription.dateRange.invalid">{{ctrl.prescription.dateRange.errorMessage}}</div>
+              </div>
+              <div class="form-group">
+                <label>Dosage:</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" name="dosage" autocomplete="off" ng-model="ctrl.prescription.dosage.value" ng-blur="ctrl.prescription.dosage.verify()"
+                  />
+                  <span class="input-group-addon">mg</span>
+                </div>
+                <div class="text-danger" ng-show="ctrl.prescription.dosage.invalid">{{ctrl.prescription.dosage.errorMessage}}</div>
+              </div>
+              <div class="form-group">
+                <label>Number of Renewals:</label>
+                <input type="text" class="form-control" name="renewals" autocomplete="off" ng-model="ctrl.prescription.renewals.value" ng-blur="ctrl.prescription.renewals.verify()"
+                />
+                <div class="text-danger" ng-show="ctrl.prescription.renewals.invalid">{{ctrl.prescription.renewals.errorMessage}}</div>
+              </div>
+            </div>
+          </section>
+          <!-- Health Metrics -->
+          <section class="jumbotron">
+            <h2>Basic Health Metrics</h2>
+            <div class="form-group">
+              <label>Height/Length:</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="height" autocomplete="off" ng-model="ctrl.visit.height.value" ng-blur="ctrl.visit.height.verify()">
+                <span class="input-group-addon">in.</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.height.invalid">{{ctrl.visit.height.errorMessage}}</div>
+            </div>
+            <div class="form-group">
+              <label>Weight:</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="weight" autocomplete="off" ng-model="ctrl.visit.weight.value" ng-blur="ctrl.visit.weight.verify()">
+                <span class="input-group-addon">lb.</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.weight.invalid">{{ctrl.visit.weight.errorMessage}}</div>
+            </div>
+            <div class="form-group" ng-hide="ctrl.visit.patient.age >= 3">
+              <label>Head Circumference:</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="head" autocomplete="off" ng-model="ctrl.visit.headCircumference.value" ng-blur="ctrl.visit.headCircumference.verify()">
+                <span class="input-group-addon">in.</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.headCircumference.invalid">{{ctrl.visit.headCircumference.errorMessage}}</div>
+            </div>
+            <div class="form-group" ng-show="ctrl.visit.patient.age >= 3 || ctrl.visit.patient.age == -1">
+              <label>Blood Pressure:</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="systolic" placeholder="systolic" autocomplete="off" ng-model="ctrl.visit.systolic.value"
+                  ng-blur="ctrl.visit.systolic.verify()">
+                <span class="input-group-addon">/</span>
+                <input type="text" class="form-control" name="diastolic" placeholder="diastolic" autocomplete="off" ng-model="ctrl.visit.diastolic.value"
+                  ng-blur="ctrl.visit.diastolic.verify()">
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.systolic.invalid">{{ctrl.visit.systolic.errorMessage}}</div>
+              <div class="text-danger" ng-show="ctrl.visit.diastolic.invalid">{{ctrl.visit.diastolic.errorMessage}}</div>
+            </div>
+            <div class="form-group" ng-show="ctrl.visit.patient.age >= 12 || ctrl.visit.patient.age == -1">
+              <label>High Density Lipoproteins (HDL):</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="hdl" autocomplete="off" ng-model="ctrl.visit.hdl.value" ng-blur="ctrl.visit.hdl.verify()">
+                <span class="input-group-addon">mg/dL</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.hdl.invalid">{{ctrl.visit.hdl.errorMessage}}</div>
+            </div>
+            <div class="form-group" ng-show="ctrl.visit.patient.age >= 12 || ctrl.visit.patient.age == -1">
+              <label>Low Density Lipoproteins (LDL):</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="ldl" autocomplete="off" ng-model="ctrl.visit.ldl.value" ng-blur="ctrl.visit.ldl.verify()">
+                <span class="input-group-addon">mg/dL</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.ldl.invalid">{{ctrl.visit.ldl.errorMessage}}</div>
+            </div>
+            <div class="form-group" ng-show="ctrl.visit.patient.age >= 12 || ctrl.visit.patient.age == -1">
+              <label>Triglycerides:</label>
+              <div class="input-group">
+                <input type="text" class="form-control" name="tri" autocomplete="off" ng-model="ctrl.visit.tri.value" ng-blur="ctrl.visit.tri.verify()">
+                <span class="input-group-addon">mg/dL</span>
+              </div>
+              <div class="text-danger" ng-show="ctrl.visit.tri.invalid">{{ctrl.visit.tri.errorMessage}}</div>
+            </div>
+            <div class="form-group row">
+              <div class="col-3">
+                <label>Household Smoking Status:</label>
+              </div>
+              <div class="col-6 card radio-box">
+                <div class="card-block">
+                  <div class="form-check" ng-repeat="opt in ctrl.visit.houseSmokingStatus.options">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="radio" name="{{opt}}" ng-model="ctrl.visit.houseSmokingStatus.value" ng-blur="ctrl.visit.houseSmokingStatus.verify()"
+                        value="{{opt}}"> {{opt}}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-group row" ng-show="ctrl.visit.patient.age >= 12 || ctrl.visit.patient.age == -1">
+              <div class="col-3">
+                <label>Patient Smoking Status:</label>
+              </div>
+              <div class="col-6 card radio-box">
+                <div class="card-block">
+                  <div class="form-check" ng-repeat="opt in ctrl.visit.patientSmokingStatus.options">
+                    <label class="form-check-label">
+                      <input class="form-check-input" type="radio" name="{{opt}}" ng-model="ctrl.visit.patientSmokingStatus.value" ng-blur="ctrl.visit.patientSmokingStatus.verify()"
+                        value="{{opt}}"> {{opt}}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- End class="row" -->
+    </div>
+    <!-- End class="row" -->
+
+
+  </div>
+
+  </div>
+</body>
+
+</html>
